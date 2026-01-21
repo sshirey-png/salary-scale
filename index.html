@@ -1,0 +1,886 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Salary Calculator | FirstLine Schools</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'fls-orange': '#e47727',
+                        'fls-orange-dark': '#c96620',
+                        'fls-orange-light': '#f5a66a',
+                        'fls-navy': '#002f60',
+                        'fls-navy-light': '#094aad',
+                    },
+                    fontFamily: {
+                        'sans': ['Open Sans', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            font-family: 'Open Sans', sans-serif;
+        }
+
+        .salary-card {
+            background: linear-gradient(135deg, #002f60 0%, #094aad 100%);
+        }
+
+        .compare-card {
+            background: linear-gradient(135deg, #1e3a5f 0%, #2d5a8a 100%);
+        }
+
+        .progression-bar {
+            background: linear-gradient(90deg, #e47727 0%, #f5a66a 100%);
+        }
+
+        .animate-number {
+            transition: all 0.3s ease-out;
+        }
+
+        .role-chip {
+            transition: all 0.2s ease;
+        }
+
+        .role-chip:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(228, 119, 39, 0.3);
+        }
+
+        .slider-track {
+            -webkit-appearance: none;
+            appearance: none;
+            height: 8px;
+            border-radius: 4px;
+            background: linear-gradient(to right, #e47727 0%, #e47727 var(--value), #e5e7eb var(--value), #e5e7eb 100%);
+        }
+
+        .slider-track::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: #e47727;
+            cursor: pointer;
+            border: 3px solid white;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+        }
+
+        .slider-track::-moz-range-thumb {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: #e47727;
+            cursor: pointer;
+            border: 3px solid white;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .fade-in {
+            animation: fadeIn 0.3s ease-out;
+        }
+
+        .table-row-hover:hover {
+            background-color: #fef3eb;
+        }
+
+        .current-step-row {
+            background-color: #fff7ed;
+            border-left: 4px solid #e47727;
+        }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen">
+    <!-- Header -->
+    <header class="bg-fls-navy text-white">
+        <div class="max-w-6xl mx-auto px-4 py-6">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h1 class="text-2xl md:text-3xl font-bold">FirstLine Schools</h1>
+                    <p class="text-fls-orange-light text-sm md:text-base mt-1">Salary & Compensation Calculator</p>
+                </div>
+                <div class="hidden md:block text-right">
+                    <p class="text-sm text-gray-300">2025-2026 School Year</p>
+                    <p class="text-xs text-gray-400">Empowering Educators, Building Futures</p>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="max-w-6xl mx-auto px-4 py-8">
+        <!-- Calculator Section -->
+        <div class="grid lg:grid-cols-2 gap-8 mb-12">
+            <!-- Left: Input Controls -->
+            <div class="bg-white rounded-2xl shadow-lg p-6 md:p-8">
+                <h2 class="text-xl font-bold text-fls-navy mb-6 flex items-center gap-2">
+                    <svg class="w-6 h-6 text-fls-orange" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path>
+                    </svg>
+                    Calculate Your Compensation
+                </h2>
+
+                <!-- Role Selection -->
+                <div class="mb-8">
+                    <label class="block text-sm font-semibold text-gray-700 mb-3">Select Your Role</label>
+                    <select id="roleSelect" class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl text-gray-800 font-medium focus:border-fls-orange focus:ring-2 focus:ring-fls-orange/20 outline-none transition-all cursor-pointer bg-white">
+                        <option value="">Choose a position...</option>
+                    </select>
+                </div>
+
+                <!-- Years of Experience -->
+                <div class="mb-6">
+                    <label class="block text-sm font-semibold text-gray-700 mb-3">Years of Experience</label>
+                    <div class="flex items-center gap-4">
+                        <input type="range" id="stepSlider" min="0" max="30" value="0" class="slider-track flex-1" style="--value: 0%">
+                        <div class="w-16 h-12 bg-fls-navy rounded-xl flex items-center justify-center">
+                            <span id="stepDisplay" class="text-white font-bold text-lg">0</span>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-4 mt-2">
+                        <div class="flex-1 flex justify-between text-xs text-gray-500">
+                            <span>0</span>
+                            <span>10</span>
+                            <span>20</span>
+                            <span>30</span>
+                        </div>
+                        <div class="w-16 text-center text-xs text-gray-500">years</div>
+                    </div>
+                </div>
+
+                <!-- Years at FirstLine (for longevity bonus) -->
+                <div id="flsYearsSection" class="mb-8 hidden">
+                    <label class="block text-sm font-semibold text-gray-700 mb-3">
+                        Years at FirstLine Schools
+                        <span class="font-normal text-gray-500 ml-1">(for longevity bonus)</span>
+                    </label>
+                    <div class="flex items-center gap-4">
+                        <input type="range" id="flsYearsSlider" min="0" max="30" value="0" class="slider-track flex-1" style="--value: 0%">
+                        <div class="w-16 h-12 bg-fls-orange rounded-xl flex items-center justify-center">
+                            <span id="flsYearsDisplay" class="text-white font-bold text-lg">0</span>
+                        </div>
+                    </div>
+                    <p class="text-xs text-gray-500 mt-2">Longevity bonus is based on years of service at FirstLine, not total experience.</p>
+                </div>
+
+                <!-- Quick Actions -->
+                <div class="flex flex-wrap gap-2 mb-6">
+                    <button onclick="viewSalaryTable()" class="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg text-sm font-medium transition-colors flex items-center gap-2">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M3 14h18m-9-4v8m-7 0h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
+                        </svg>
+                        View Full Scale
+                    </button>
+                    <button onclick="openCompare()" class="px-4 py-2 bg-fls-orange/10 hover:bg-fls-orange/20 text-fls-orange rounded-lg text-sm font-medium transition-colors flex items-center gap-2">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+                        </svg>
+                        Compare Roles
+                    </button>
+                </div>
+
+                <!-- Info Note -->
+                <div class="bg-blue-50 border border-blue-200 rounded-xl p-4">
+                    <div class="flex gap-3">
+                        <svg class="w-5 h-5 text-blue-500 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                        <div class="text-sm text-blue-800">
+                            <p class="font-semibold mb-1">About Step Placement</p>
+                            <p class="text-blue-700">Your step is determined by years of relevant experience. New hires may receive credit for prior experience in similar roles.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right: Salary Display -->
+            <div id="salaryDisplay" class="salary-card rounded-2xl shadow-lg p-6 md:p-8 text-white">
+                <div id="noSelection" class="flex flex-col items-center justify-center h-full min-h-[400px] text-center">
+                    <div class="w-20 h-20 bg-white/10 rounded-full flex items-center justify-center mb-6">
+                        <svg class="w-10 h-10 text-fls-orange-light" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                    </div>
+                    <h3 class="text-xl font-semibold mb-2">Select a Role to Begin</h3>
+                    <p class="text-gray-300 text-sm max-w-xs">Choose your position from the dropdown to see your compensation details and career progression.</p>
+                </div>
+
+                <div id="salaryContent" class="hidden">
+                    <!-- Role Title -->
+                    <div class="mb-6">
+                        <p class="text-fls-orange-light text-sm font-medium uppercase tracking-wide">Selected Position</p>
+                        <h3 id="selectedRole" class="text-2xl font-bold mt-1"></h3>
+                        <p id="stepInfo" class="text-gray-300 text-sm mt-1"></p>
+                    </div>
+
+                    <!-- Main Salary Display -->
+                    <div class="bg-white/10 rounded-xl p-6 mb-6">
+                        <div id="annualDisplay">
+                            <p class="text-gray-300 text-sm mb-1">Annual Salary</p>
+                            <p id="baseSalary" class="text-5xl font-bold text-white"></p>
+                        </div>
+                        <div id="hourlyDisplay" class="hidden">
+                            <p class="text-gray-300 text-sm mb-1">Hourly Rate</p>
+                            <p id="hourlyRate" class="text-5xl font-bold text-white"></p>
+                            <p id="annualEquivalent" class="text-gray-300 text-sm mt-2"></p>
+                        </div>
+                    </div>
+
+                    <!-- Bonus Section -->
+                    <div id="bonusSection" class="hidden mb-6">
+                        <div class="bg-fls-orange/20 border border-fls-orange/30 rounded-xl p-4">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <p class="text-fls-orange-light text-sm font-medium">Longevity Bonus</p>
+                                    <p class="text-xs text-gray-300 mt-1">Annual retention incentive</p>
+                                </div>
+                                <p id="bonusAmount" class="text-2xl font-bold text-fls-orange-light"></p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Total Compensation -->
+                    <div id="totalSection" class="hidden mb-6">
+                        <div class="flex items-center justify-between py-4 border-t border-white/20">
+                            <p class="text-lg font-semibold">Total Annual Compensation</p>
+                            <p id="totalCompensation" class="text-3xl font-bold text-fls-orange-light"></p>
+                        </div>
+                    </div>
+
+                    <!-- Salary Progression -->
+                    <div class="mt-6">
+                        <p class="text-sm font-semibold text-gray-300 mb-4">Career Progression</p>
+                        <div class="grid grid-cols-3 gap-3">
+                            <div class="bg-white/10 rounded-lg p-3 text-center">
+                                <p class="text-xs text-gray-400 mb-1">Current</p>
+                                <p id="currentSalary" class="text-lg font-bold"></p>
+                            </div>
+                            <div class="bg-white/10 rounded-lg p-3 text-center">
+                                <p class="text-xs text-gray-400 mb-1">Next Year</p>
+                                <p id="nextSalary" class="text-lg font-bold"></p>
+                            </div>
+                            <div class="bg-white/10 rounded-lg p-3 text-center">
+                                <p class="text-xs text-gray-400 mb-1">In 5 Years</p>
+                                <p id="fiveYearSalary" class="text-lg font-bold"></p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Salary Table Modal -->
+        <div id="tableModal" class="hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+            <div class="bg-white rounded-2xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-hidden flex flex-col">
+                <div class="bg-fls-navy text-white p-6 flex items-center justify-between">
+                    <div>
+                        <h3 id="tableTitle" class="text-xl font-bold"></h3>
+                        <p class="text-gray-300 text-sm">Full salary scale with step progression</p>
+                    </div>
+                    <button onclick="closeTableModal()" class="p-2 hover:bg-white/10 rounded-lg transition-colors">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                        </svg>
+                    </button>
+                </div>
+                <div class="overflow-auto flex-1 p-6">
+                    <table class="w-full">
+                        <thead class="bg-gray-50 sticky top-0">
+                            <tr>
+                                <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Step</th>
+                                <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Years</th>
+                                <th class="px-4 py-3 text-right text-xs font-semibold text-gray-500 uppercase">Base Salary</th>
+                                <th id="bonusHeader" class="px-4 py-3 text-right text-xs font-semibold text-gray-500 uppercase hidden">Bonus</th>
+                                <th id="totalHeader" class="px-4 py-3 text-right text-xs font-semibold text-gray-500 uppercase hidden">Total</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tableBody" class="divide-y divide-gray-100">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Compare Roles Modal -->
+        <div id="compareModal" class="hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+            <div class="bg-white rounded-2xl shadow-2xl max-w-5xl w-full max-h-[90vh] overflow-hidden flex flex-col">
+                <div class="bg-fls-navy text-white p-6 flex items-center justify-between">
+                    <div>
+                        <h3 class="text-xl font-bold">Compare Positions</h3>
+                        <p class="text-gray-300 text-sm">Select up to 3 roles to compare side-by-side</p>
+                    </div>
+                    <button onclick="closeCompareModal()" class="p-2 hover:bg-white/10 rounded-lg transition-colors">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                        </svg>
+                    </button>
+                </div>
+                <div class="p-6 border-b border-gray-200">
+                    <div class="flex flex-wrap gap-2" id="roleChips">
+                    </div>
+                </div>
+                <div class="overflow-auto flex-1 p-6">
+                    <div id="compareContent" class="grid md:grid-cols-3 gap-6">
+                        <div class="flex items-center justify-center h-64 bg-gray-50 rounded-xl border-2 border-dashed border-gray-200">
+                            <p class="text-gray-400 text-sm">Select roles above to compare</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Role Categories Section -->
+        <div class="mb-12">
+            <h2 class="text-2xl font-bold text-fls-navy mb-6 text-center">Explore Our Career Paths</h2>
+            <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                <!-- Classroom Support -->
+                <div class="bg-white rounded-xl shadow-md p-5 hover:shadow-lg transition-shadow">
+                    <div class="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center mb-4">
+                        <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path>
+                        </svg>
+                    </div>
+                    <h3 class="font-bold text-gray-900 mb-2">Classroom Support</h3>
+                    <p class="text-sm text-gray-500 mb-3">Start your education career</p>
+                    <div class="space-y-1">
+                        <button onclick="selectRole('Paraprofessional')" class="text-sm text-fls-orange hover:underline block">Paraprofessional</button>
+                        <button onclick="selectRole('Teacher Assistant')" class="text-sm text-fls-orange hover:underline block">Teacher Assistant</button>
+                        <button onclick="selectRole('Assistant Dean')" class="text-sm text-fls-orange hover:underline block">Assistant Dean</button>
+                        <button onclick="selectRole('Associate Teacher')" class="text-sm text-fls-orange hover:underline block">Associate Teacher</button>
+                    </div>
+                </div>
+
+                <!-- Teaching -->
+                <div class="bg-white rounded-xl shadow-md p-5 hover:shadow-lg transition-shadow">
+                    <div class="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center mb-4">
+                        <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z"></path>
+                        </svg>
+                    </div>
+                    <h3 class="font-bold text-gray-900 mb-2">Teaching</h3>
+                    <p class="text-sm text-gray-500 mb-3">Lead your own classroom</p>
+                    <div class="space-y-1">
+                        <button onclick="selectRole('Teacher')" class="text-sm text-fls-orange hover:underline block">Teacher</button>
+                    </div>
+                </div>
+
+                <!-- Student Services -->
+                <div class="bg-white rounded-xl shadow-md p-5 hover:shadow-lg transition-shadow">
+                    <div class="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center mb-4">
+                        <svg class="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path>
+                        </svg>
+                    </div>
+                    <h3 class="font-bold text-gray-900 mb-2">Student Services</h3>
+                    <p class="text-sm text-gray-500 mb-3">Support student success</p>
+                    <div class="space-y-1">
+                        <button onclick="selectRole('Speech Language Pathologist')" class="text-sm text-fls-orange hover:underline block">Speech Pathologist</button>
+                        <button onclick="selectRole('Nurse')" class="text-sm text-fls-orange hover:underline block">School Nurse</button>
+                    </div>
+                </div>
+
+                <!-- Leadership -->
+                <div class="bg-white rounded-xl shadow-md p-5 hover:shadow-lg transition-shadow">
+                    <div class="w-12 h-12 bg-fls-orange/20 rounded-xl flex items-center justify-center mb-4">
+                        <svg class="w-6 h-6 text-fls-orange" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z"></path>
+                        </svg>
+                    </div>
+                    <h3 class="font-bold text-gray-900 mb-2">Leadership</h3>
+                    <p class="text-sm text-gray-500 mb-3">Serve on a school leadership team</p>
+                    <div class="space-y-1">
+                        <button onclick="selectRole('Dean')" class="text-sm text-fls-orange hover:underline block">Dean</button>
+                        <button onclick="selectRole('SPED Coordinator')" class="text-sm text-fls-orange hover:underline block">SPED Coordinator</button>
+                        <button onclick="selectRole('RTI Coordinator')" class="text-sm text-fls-orange hover:underline block">RTI Coordinator</button>
+                        <button onclick="selectRole('School Operations Manager')" class="text-sm text-fls-orange hover:underline block">School Ops Manager</button>
+                        <button onclick="selectRole('Assistant Principal')" class="text-sm text-fls-orange hover:underline block">Assistant Principal</button>
+                        <button onclick="selectRole('Principal')" class="text-sm text-fls-orange hover:underline block">Principal</button>
+                        <button onclick="selectRole('School Director')" class="text-sm text-fls-orange hover:underline block">School Director</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Benefits Section -->
+        <div class="bg-white rounded-2xl shadow-lg p-8 mb-12">
+            <h2 class="text-2xl font-bold text-fls-navy mb-6 text-center">Total Rewards Beyond Salary</h2>
+            <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                <div class="text-center">
+                    <div class="w-14 h-14 bg-fls-orange/10 rounded-full flex items-center justify-center mx-auto mb-3">
+                        <svg class="w-7 h-7 text-fls-orange" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path>
+                        </svg>
+                    </div>
+                    <h3 class="font-semibold text-gray-900 mb-1">Health Insurance</h3>
+                    <p class="text-sm text-gray-500">Medical, dental & vision coverage</p>
+                </div>
+                <div class="text-center">
+                    <div class="w-14 h-14 bg-fls-orange/10 rounded-full flex items-center justify-center mx-auto mb-3">
+                        <svg class="w-7 h-7 text-fls-orange" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                    </div>
+                    <h3 class="font-semibold text-gray-900 mb-1">Retirement</h3>
+                    <p class="text-sm text-gray-500">403(b) with employer match</p>
+                </div>
+                <div class="text-center">
+                    <div class="w-14 h-14 bg-fls-orange/10 rounded-full flex items-center justify-center mx-auto mb-3">
+                        <svg class="w-7 h-7 text-fls-orange" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path>
+                        </svg>
+                    </div>
+                    <h3 class="font-semibold text-gray-900 mb-1">Professional Development</h3>
+                    <p class="text-sm text-gray-500">Ongoing training & growth</p>
+                </div>
+                <div class="text-center">
+                    <div class="w-14 h-14 bg-fls-orange/10 rounded-full flex items-center justify-center mx-auto mb-3">
+                        <svg class="w-7 h-7 text-fls-orange" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
+                        </svg>
+                    </div>
+                    <h3 class="font-semibold text-gray-900 mb-1">Supportive Community</h3>
+                    <p class="text-sm text-gray-500">Collaborative team culture</p>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-fls-navy text-white py-8">
+        <div class="max-w-6xl mx-auto px-4 text-center">
+            <p class="text-gray-300 mb-2">FirstLine Schools</p>
+            <p class="text-sm text-gray-400">Empowering students to achieve academic and personal success</p>
+            <p class="text-xs text-gray-500 mt-4">Salary data effective 2025-2026 school year. Actual placement determined by HR review of qualifications and experience.</p>
+        </div>
+    </footer>
+
+    <script>
+        // Salary Scale Data
+        const salaryData = {
+            salaryScales: [
+                {"step": 0, "paraprofessional": 28850, "teacher_assistant": 31900, "foa_purchasing_hourly": 16.50, "foa_purchasing_annual": 34320, "degreed_sub": 36650, "asst_dean_associate_teacher": 39000, "foa_data_hourly": 19.50, "foa_data_annual": 40560, "teacher": 48000, "lead_dean": 60750, "slp": 61000, "nurse": 62500, "school_ops_manager": 65500, "asst_principal_sped_rti": 69500, "principal": 90000, "school_director": 108000, "bonus": 0},
+                {"step": 1, "paraprofessional": 29139, "teacher_assistant": 32219, "foa_purchasing_hourly": 16.67, "foa_purchasing_annual": 34663, "degreed_sub": 37017, "asst_dean_associate_teacher": 39390, "foa_data_hourly": 19.70, "foa_data_annual": 40966, "teacher": 48960, "lead_dean": 61358, "slp": 61610, "nurse": 63125, "school_ops_manager": 66155, "asst_principal_sped_rti": 70195, "principal": 90900, "school_director": 109080, "bonus": 500},
+                {"step": 2, "paraprofessional": 29430, "teacher_assistant": 32541, "foa_purchasing_hourly": 16.83, "foa_purchasing_annual": 35010, "degreed_sub": 37387, "asst_dean_associate_teacher": 39784, "foa_data_hourly": 19.89, "foa_data_annual": 41375, "teacher": 50920, "lead_dean": 61971, "slp": 62226, "nurse": 63756, "school_ops_manager": 66817, "asst_principal_sped_rti": 70897, "principal": 91809, "school_director": 110171, "bonus": 500},
+                {"step": 3, "paraprofessional": 29724, "teacher_assistant": 32867, "foa_purchasing_hourly": 17.00, "foa_purchasing_annual": 35360, "degreed_sub": 37761, "asst_dean_associate_teacher": 40182, "foa_data_hourly": 20.09, "foa_data_annual": 41789, "teacher": 51430, "lead_dean": 62591, "slp": 62848, "nurse": 64394, "school_ops_manager": 67485, "asst_principal_sped_rti": 71606, "principal": 92727, "school_director": 111273, "bonus": 750},
+                {"step": 4, "paraprofessional": 30021, "teacher_assistant": 33195, "foa_purchasing_hourly": 17.17, "foa_purchasing_annual": 35714, "degreed_sub": 38138, "asst_dean_associate_teacher": 40584, "foa_data_hourly": 20.29, "foa_data_annual": 42207, "teacher": 51945, "lead_dean": 63217, "slp": 63477, "nurse": 65038, "school_ops_manager": 68160, "asst_principal_sped_rti": 72322, "principal": 93654, "school_director": 112385, "bonus": 750},
+                {"step": 5, "paraprofessional": 30322, "teacher_assistant": 33527, "foa_purchasing_hourly": 17.34, "foa_purchasing_annual": 36071, "degreed_sub": 38520, "asst_dean_associate_teacher": 40989, "foa_data_hourly": 20.49, "foa_data_annual": 42629, "teacher": 56105, "lead_dean": 63849, "slp": 64112, "nurse": 65688, "school_ops_manager": 68841, "asst_principal_sped_rti": 73045, "principal": 94591, "school_director": 113509, "bonus": 750},
+                {"step": 6, "paraprofessional": 30625, "teacher_assistant": 33862, "foa_purchasing_hourly": 17.52, "foa_purchasing_annual": 36431, "degreed_sub": 38905, "asst_dean_associate_teacher": 41399, "foa_data_hourly": 20.70, "foa_data_annual": 43055, "teacher": 56670, "lead_dean": 64487, "slp": 64753, "nurse": 66345, "school_ops_manager": 69530, "asst_principal_sped_rti": 73776, "principal": 95537, "school_director": 114644, "bonus": 1000},
+                {"step": 7, "paraprofessional": 30931, "teacher_assistant": 34201, "foa_purchasing_hourly": 17.69, "foa_purchasing_annual": 36796, "degreed_sub": 39294, "asst_dean_associate_teacher": 41813, "foa_data_hourly": 20.91, "foa_data_annual": 43486, "teacher": 57240, "lead_dean": 65132, "slp": 65400, "nurse": 67008, "school_ops_manager": 70225, "asst_principal_sped_rti": 74513, "principal": 96492, "school_director": 115791, "bonus": 1000},
+                {"step": 8, "paraprofessional": 31240, "teacher_assistant": 34543, "foa_purchasing_hourly": 17.87, "foa_purchasing_annual": 37164, "degreed_sub": 39687, "asst_dean_associate_teacher": 42231, "foa_data_hourly": 21.12, "foa_data_annual": 43921, "teacher": 57815, "lead_dean": 65784, "slp": 66054, "nurse": 67679, "school_ops_manager": 70927, "asst_principal_sped_rti": 75259, "principal": 97457, "school_director": 116949, "bonus": 1000},
+                {"step": 9, "paraprofessional": 31553, "teacher_assistant": 34889, "foa_purchasing_hourly": 18.05, "foa_purchasing_annual": 37535, "degreed_sub": 40084, "asst_dean_associate_teacher": 42654, "foa_data_hourly": 21.33, "foa_data_annual": 44360, "teacher": 60130, "lead_dean": 66441, "slp": 66715, "nurse": 68355, "school_ops_manager": 71636, "asst_principal_sped_rti": 76011, "principal": 98432, "school_director": 118118, "bonus": 1000},
+                {"step": 10, "paraprofessional": 31868, "teacher_assistant": 35237, "foa_purchasing_hourly": 18.23, "foa_purchasing_annual": 37911, "degreed_sub": 40484, "asst_dean_associate_teacher": 43080, "foa_data_hourly": 21.54, "foa_data_annual": 44803, "teacher": 60735, "lead_dean": 67106, "slp": 67382, "nurse": 69039, "school_ops_manager": 72353, "asst_principal_sped_rti": 76771, "principal": 99416, "school_director": 119299, "bonus": 1250},
+                {"step": 11, "paraprofessional": 32187, "teacher_assistant": 35590, "foa_purchasing_hourly": 18.41, "foa_purchasing_annual": 38290, "degreed_sub": 40889, "asst_dean_associate_teacher": 43511, "foa_data_hourly": 21.76, "foa_data_annual": 45252, "teacher": 61345, "lead_dean": 67777, "slp": 68056, "nurse": 69729, "school_ops_manager": 73076, "asst_principal_sped_rti": 77539, "principal": 100410, "school_director": 120492, "bonus": 1250},
+                {"step": 12, "paraprofessional": 32509, "teacher_assistant": 35946, "foa_purchasing_hourly": 18.59, "foa_purchasing_annual": 38673, "degreed_sub": 41298, "asst_dean_associate_teacher": 43946, "foa_data_hourly": 21.97, "foa_data_annual": 45704, "teacher": 61960, "lead_dean": 68455, "slp": 68736, "nurse": 70427, "school_ops_manager": 73807, "asst_principal_sped_rti": 78314, "principal": 101414, "school_director": 121697, "bonus": 1250},
+                {"step": 13, "paraprofessional": 32834, "teacher_assistant": 36305, "foa_purchasing_hourly": 18.78, "foa_purchasing_annual": 39059, "degreed_sub": 41711, "asst_dean_associate_teacher": 44386, "foa_data_hourly": 22.19, "foa_data_annual": 46161, "teacher": 62580, "lead_dean": 69139, "slp": 69424, "nurse": 71131, "school_ops_manager": 74545, "asst_principal_sped_rti": 79097, "principal": 102428, "school_director": 122914, "bonus": 1250},
+                {"step": 14, "paraprofessional": 33162, "teacher_assistant": 36668, "foa_purchasing_hourly": 18.97, "foa_purchasing_annual": 39450, "degreed_sub": 42128, "asst_dean_associate_teacher": 44829, "foa_data_hourly": 22.41, "foa_data_annual": 46623, "teacher": 63210, "lead_dean": 69831, "slp": 70118, "nurse": 71842, "school_ops_manager": 75291, "asst_principal_sped_rti": 79888, "principal": 103453, "school_director": 124143, "bonus": 1250},
+                {"step": 15, "paraprofessional": 33494, "teacher_assistant": 37035, "foa_purchasing_hourly": 19.16, "foa_purchasing_annual": 39844, "degreed_sub": 42550, "asst_dean_associate_teacher": 45278, "foa_data_hourly": 22.64, "foa_data_annual": 47089, "teacher": 63845, "lead_dean": 70529, "slp": 70819, "nurse": 72561, "school_ops_manager": 76043, "asst_principal_sped_rti": 80687, "principal": 104487, "school_director": 125385, "bonus": 1250},
+                {"step": 16, "paraprofessional": 33829, "teacher_assistant": 37405, "foa_purchasing_hourly": 19.35, "foa_purchasing_annual": 40243, "degreed_sub": 42975, "asst_dean_associate_teacher": 45731, "foa_data_hourly": 22.87, "foa_data_annual": 47560, "teacher": 64485, "lead_dean": 71234, "slp": 71527, "nurse": 73286, "school_ops_manager": 76804, "asst_principal_sped_rti": 81494, "principal": 105532, "school_director": 126638, "bonus": 1250},
+                {"step": 17, "paraprofessional": 34167, "teacher_assistant": 37779, "foa_purchasing_hourly": 19.54, "foa_purchasing_annual": 40645, "degreed_sub": 43405, "asst_dean_associate_teacher": 46188, "foa_data_hourly": 23.09, "foa_data_annual": 48035, "teacher": 65130, "lead_dean": 71946, "slp": 72243, "nurse": 74019, "school_ops_manager": 77572, "asst_principal_sped_rti": 82309, "principal": 106587, "school_director": 127905, "bonus": 1250},
+                {"step": 18, "paraprofessional": 34509, "teacher_assistant": 38157, "foa_purchasing_hourly": 19.74, "foa_purchasing_annual": 41052, "degreed_sub": 43839, "asst_dean_associate_teacher": 46650, "foa_data_hourly": 23.32, "foa_data_annual": 48516, "teacher": 65785, "lead_dean": 72666, "slp": 72965, "nurse": 74759, "school_ops_manager": 78348, "asst_principal_sped_rti": 83132, "principal": 107653, "school_director": 129184, "bonus": 1250},
+                {"step": 19, "paraprofessional": 34854, "teacher_assistant": 38539, "foa_purchasing_hourly": 19.93, "foa_purchasing_annual": 41462, "degreed_sub": 44277, "asst_dean_associate_teacher": 47116, "foa_data_hourly": 23.56, "foa_data_annual": 49001, "teacher": 66445, "lead_dean": 73393, "slp": 73695, "nurse": 75507, "school_ops_manager": 79131, "asst_principal_sped_rti": 83964, "principal": 108730, "school_director": 130476, "bonus": 1250},
+                {"step": 20, "paraprofessional": 35202, "teacher_assistant": 38924, "foa_purchasing_hourly": 20.13, "foa_purchasing_annual": 41877, "degreed_sub": 44720, "asst_dean_associate_teacher": 47587, "foa_data_hourly": 23.79, "foa_data_annual": 49491, "teacher": 67110, "lead_dean": 74127, "slp": 74432, "nurse": 76262, "school_ops_manager": 79922, "asst_principal_sped_rti": 84803, "principal": 109817, "school_director": 131781, "bonus": 1250},
+                {"step": 21, "paraprofessional": 35555, "teacher_assistant": 39313, "foa_purchasing_hourly": 20.33, "foa_purchasing_annual": 42296, "degreed_sub": 45167, "asst_dean_associate_teacher": 48063, "foa_data_hourly": 24.03, "foa_data_annual": 49986, "teacher": 67785, "lead_dean": 74868, "slp": 75176, "nurse": 77024, "school_ops_manager": 80722, "asst_principal_sped_rti": 85651, "principal": 110915, "school_director": 133098, "bonus": 1250},
+                {"step": 22, "paraprofessional": 35910, "teacher_assistant": 39706, "foa_purchasing_hourly": 20.54, "foa_purchasing_annual": 42719, "degreed_sub": 45619, "asst_dean_associate_teacher": 48544, "foa_data_hourly": 24.27, "foa_data_annual": 50486, "teacher": 68465, "lead_dean": 75616, "slp": 75928, "nurse": 77795, "school_ops_manager": 81529, "asst_principal_sped_rti": 86508, "principal": 112024, "school_director": 134429, "bonus": 1250},
+                {"step": 23, "paraprofessional": 36269, "teacher_assistant": 40104, "foa_purchasing_hourly": 20.74, "foa_purchasing_annual": 43146, "degreed_sub": 46075, "asst_dean_associate_teacher": 49029, "foa_data_hourly": 24.51, "foa_data_annual": 50991, "teacher": 69150, "lead_dean": 76373, "slp": 76687, "nurse": 78573, "school_ops_manager": 82344, "asst_principal_sped_rti": 87373, "principal": 113145, "school_director": 135774, "bonus": 1250},
+                {"step": 24, "paraprofessional": 36632, "teacher_assistant": 40505, "foa_purchasing_hourly": 20.95, "foa_purchasing_annual": 43577, "degreed_sub": 46536, "asst_dean_associate_teacher": 49520, "foa_data_hourly": 24.76, "foa_data_annual": 51500, "teacher": 69845, "lead_dean": 77136, "slp": 77454, "nurse": 79358, "school_ops_manager": 83168, "asst_principal_sped_rti": 88247, "principal": 114276, "school_director": 137131, "bonus": 1250},
+                {"step": 25, "paraprofessional": 36998, "teacher_assistant": 40910, "foa_purchasing_hourly": 21.16, "foa_purchasing_annual": 44013, "degreed_sub": 47001, "asst_dean_associate_teacher": 50015, "foa_data_hourly": 25.01, "foa_data_annual": 52015, "teacher": 70545, "lead_dean": 77908, "slp": 78228, "nurse": 80152, "school_ops_manager": 83999, "asst_principal_sped_rti": 89129, "principal": 115419, "school_director": 138503, "bonus": 1250},
+                {"step": 26, "paraprofessional": 37368, "teacher_assistant": 41319, "foa_purchasing_hourly": 21.37, "foa_purchasing_annual": 44453, "degreed_sub": 47471, "asst_dean_associate_teacher": 50515, "foa_data_hourly": 25.26, "foa_data_annual": 52536, "teacher": 71255, "lead_dean": 78687, "slp": 79011, "nurse": 80954, "school_ops_manager": 84839, "asst_principal_sped_rti": 90020, "principal": 116573, "school_director": 139888, "bonus": 1250},
+                {"step": 27, "paraprofessional": 37742, "teacher_assistant": 41732, "foa_purchasing_hourly": 21.59, "foa_purchasing_annual": 44898, "degreed_sub": 47946, "asst_dean_associate_teacher": 51020, "foa_data_hourly": 25.51, "foa_data_annual": 53061, "teacher": 71970, "lead_dean": 79474, "slp": 79801, "nurse": 81763, "school_ops_manager": 85688, "asst_principal_sped_rti": 90921, "principal": 117739, "school_director": 141287, "bonus": 1250},
+                {"step": 28, "paraprofessional": 38119, "teacher_assistant": 42149, "foa_purchasing_hourly": 21.80, "foa_purchasing_annual": 45347, "degreed_sub": 48425, "asst_dean_associate_teacher": 51530, "foa_data_hourly": 25.77, "foa_data_annual": 53592, "teacher": 72690, "lead_dean": 80268, "slp": 80599, "nurse": 82581, "school_ops_manager": 86545, "asst_principal_sped_rti": 91830, "principal": 118916, "school_director": 142699, "bonus": 1250},
+                {"step": 29, "paraprofessional": 38500, "teacher_assistant": 42571, "foa_purchasing_hourly": 22.02, "foa_purchasing_annual": 45800, "degreed_sub": 48910, "asst_dean_associate_teacher": 52046, "foa_data_hourly": 26.02, "foa_data_annual": 54127, "teacher": 73420, "lead_dean": 81071, "slp": 81405, "nurse": 83406, "school_ops_manager": 87410, "asst_principal_sped_rti": 92748, "principal": 120105, "school_director": 144126, "bonus": 1250},
+                {"step": 30, "paraprofessional": 38885, "teacher_assistant": 42996, "foa_purchasing_hourly": 22.24, "foa_purchasing_annual": 46258, "degreed_sub": 49399, "asst_dean_associate_teacher": 52566, "foa_data_hourly": 26.28, "foa_data_annual": 54669, "teacher": 74155, "lead_dean": 81882, "slp": 82219, "nurse": 84241, "school_ops_manager": 88284, "asst_principal_sped_rti": 93675, "principal": 121306, "school_director": 145568, "bonus": 1250}
+            ],
+            jobTitleMapping: {
+                "Paraprofessional": "paraprofessional",
+                "Teacher Assistant": "teacher_assistant",
+                "ISI Coordinator": "teacher_assistant",
+                "Front Office Administrator - Purchasing (Hourly)": "foa_purchasing_hourly",
+                "Assistant Dean": "asst_dean_associate_teacher",
+                "Associate Teacher": "asst_dean_associate_teacher",
+                "Front Office Administrator - Data (Hourly)": "foa_data_hourly",
+                "Teacher": "teacher",
+                "Lead Teacher": "teacher",
+                "Lead Dean": "lead_dean",
+                "Dean": "lead_dean",
+                "Speech Language Pathologist": "slp",
+                "Nurse": "nurse",
+                "School Operations Manager": "school_ops_manager",
+                "Assistant Principal": "asst_principal_sped_rti",
+                "SPED Coordinator": "asst_principal_sped_rti",
+                "RTI Coordinator": "asst_principal_sped_rti",
+                "Principal": "principal",
+                "School Director": "school_director"
+            },
+            longevityEligible: ["paraprofessional", "teacher_assistant", "teacher", "asst_dean_associate_teacher"],
+            hourlyRoles: ["foa_purchasing_hourly", "foa_data_hourly"]
+        };
+
+        // State
+        let selectedRoles = [];
+        let currentStep = 0;
+        let flsYears = 0;
+        let currentRoleKey = null;
+        let currentRoleName = null;
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            populateRoleDropdown();
+            setupEventListeners();
+        });
+
+        function populateRoleDropdown() {
+            const select = document.getElementById('roleSelect');
+            const sortedRoles = Object.keys(salaryData.jobTitleMapping).sort();
+
+            sortedRoles.forEach(role => {
+                const option = document.createElement('option');
+                option.value = role;
+                option.textContent = role;
+                select.appendChild(option);
+            });
+        }
+
+        function setupEventListeners() {
+            document.getElementById('roleSelect').addEventListener('change', (e) => {
+                if (e.target.value) {
+                    currentRoleName = e.target.value;
+                    currentRoleKey = salaryData.jobTitleMapping[e.target.value];
+                    // Show/hide FLS years section based on longevity eligibility
+                    const flsSection = document.getElementById('flsYearsSection');
+                    if (isLongevityEligible(currentRoleKey)) {
+                        flsSection.classList.remove('hidden');
+                    } else {
+                        flsSection.classList.add('hidden');
+                    }
+                    updateSalaryDisplay();
+                } else {
+                    showNoSelection();
+                    document.getElementById('flsYearsSection').classList.add('hidden');
+                }
+            });
+
+            document.getElementById('stepSlider').addEventListener('input', (e) => {
+                currentStep = parseInt(e.target.value);
+                document.getElementById('stepDisplay').textContent = currentStep;
+                e.target.style.setProperty('--value', `${(currentStep / 30) * 100}%`);
+                if (currentRoleKey) {
+                    updateSalaryDisplay();
+                }
+            });
+
+            document.getElementById('flsYearsSlider').addEventListener('input', (e) => {
+                flsYears = parseInt(e.target.value);
+                document.getElementById('flsYearsDisplay').textContent = flsYears;
+                e.target.style.setProperty('--value', `${(flsYears / 30) * 100}%`);
+                if (currentRoleKey) {
+                    updateSalaryDisplay();
+                }
+            });
+
+            // Close modals on background click
+            document.getElementById('tableModal').addEventListener('click', (e) => {
+                if (e.target === document.getElementById('tableModal')) closeTableModal();
+            });
+            document.getElementById('compareModal').addEventListener('click', (e) => {
+                if (e.target === document.getElementById('compareModal')) closeCompareModal();
+            });
+        }
+
+        function selectRole(roleName) {
+            document.getElementById('roleSelect').value = roleName;
+            currentRoleName = roleName;
+            currentRoleKey = salaryData.jobTitleMapping[roleName];
+            // Show/hide FLS years section based on longevity eligibility
+            const flsSection = document.getElementById('flsYearsSection');
+            if (isLongevityEligible(currentRoleKey)) {
+                flsSection.classList.remove('hidden');
+            } else {
+                flsSection.classList.add('hidden');
+            }
+            updateSalaryDisplay();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function showNoSelection() {
+            document.getElementById('noSelection').classList.remove('hidden');
+            document.getElementById('salaryContent').classList.add('hidden');
+        }
+
+        function formatCurrency(amount) {
+            return new Intl.NumberFormat('en-US', {
+                style: 'currency',
+                currency: 'USD',
+                minimumFractionDigits: 0,
+                maximumFractionDigits: 0
+            }).format(amount);
+        }
+
+        function formatHourly(amount) {
+            return new Intl.NumberFormat('en-US', {
+                style: 'currency',
+                currency: 'USD',
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
+            }).format(amount);
+        }
+
+        function getSalary(roleKey, step) {
+            const scale = salaryData.salaryScales[Math.min(step, 30)];
+            return scale[roleKey];
+        }
+
+        function getBonus(step) {
+            return salaryData.salaryScales[Math.min(step, 30)].bonus;
+        }
+
+        function isHourly(roleKey) {
+            return salaryData.hourlyRoles.includes(roleKey);
+        }
+
+        function isLongevityEligible(roleKey) {
+            return salaryData.longevityEligible.includes(roleKey);
+        }
+
+        function updateSalaryDisplay() {
+            document.getElementById('noSelection').classList.add('hidden');
+            document.getElementById('salaryContent').classList.remove('hidden');
+            document.getElementById('salaryContent').classList.add('fade-in');
+
+            const salary = getSalary(currentRoleKey, currentStep);
+            const bonus = getBonus(flsYears); // Use FLS years for bonus, not experience
+            const hourly = isHourly(currentRoleKey);
+            const longevityEligible = isLongevityEligible(currentRoleKey);
+
+            // Role info
+            document.getElementById('selectedRole').textContent = currentRoleName;
+            let stepInfoText = `Step ${currentStep} • ${currentStep} year${currentStep !== 1 ? 's' : ''} experience`;
+            if (longevityEligible) {
+                stepInfoText += ` • ${flsYears} yr${flsYears !== 1 ? 's' : ''} at FLS`;
+            }
+            document.getElementById('stepInfo').textContent = stepInfoText;
+
+            // Salary display
+            if (hourly) {
+                document.getElementById('annualDisplay').classList.add('hidden');
+                document.getElementById('hourlyDisplay').classList.remove('hidden');
+                document.getElementById('hourlyRate').textContent = formatHourly(salary) + '/hr';
+                document.getElementById('annualEquivalent').textContent = `≈ ${formatCurrency(salary * 2080)} annually (40 hrs/week)`;
+            } else {
+                document.getElementById('annualDisplay').classList.remove('hidden');
+                document.getElementById('hourlyDisplay').classList.add('hidden');
+                document.getElementById('baseSalary').textContent = formatCurrency(salary);
+            }
+
+            // Bonus section - use flsYears for bonus
+            if (longevityEligible && bonus > 0) {
+                document.getElementById('bonusSection').classList.remove('hidden');
+                document.getElementById('bonusAmount').textContent = '+' + formatCurrency(bonus);
+                document.getElementById('totalSection').classList.remove('hidden');
+                document.getElementById('totalCompensation').textContent = formatCurrency(salary + bonus);
+            } else if (longevityEligible && flsYears === 0) {
+                // Show bonus section but indicate it starts at year 1
+                document.getElementById('bonusSection').classList.remove('hidden');
+                document.getElementById('bonusAmount').textContent = 'Starts Year 1';
+                document.getElementById('totalSection').classList.remove('hidden');
+                document.getElementById('totalCompensation').textContent = formatCurrency(salary);
+            } else {
+                document.getElementById('bonusSection').classList.add('hidden');
+                document.getElementById('totalSection').classList.add('hidden');
+            }
+
+            // Progression - salary based on experience step, bonus based on FLS years
+            const nextStep = Math.min(currentStep + 1, 30);
+            const fiveYearStep = Math.min(currentStep + 5, 30);
+            const nextFlsYear = Math.min(flsYears + 1, 30);
+            const fiveYearFls = Math.min(flsYears + 5, 30);
+
+            if (hourly) {
+                document.getElementById('currentSalary').textContent = formatHourly(salary);
+                document.getElementById('nextSalary').textContent = formatHourly(getSalary(currentRoleKey, nextStep));
+                document.getElementById('fiveYearSalary').textContent = formatHourly(getSalary(currentRoleKey, fiveYearStep));
+            } else {
+                const currentTotal = longevityEligible ? salary + bonus : salary;
+                const nextTotal = longevityEligible ? getSalary(currentRoleKey, nextStep) + getBonus(nextFlsYear) : getSalary(currentRoleKey, nextStep);
+                const fiveYearTotal = longevityEligible ? getSalary(currentRoleKey, fiveYearStep) + getBonus(fiveYearFls) : getSalary(currentRoleKey, fiveYearStep);
+
+                document.getElementById('currentSalary').textContent = formatCurrency(currentTotal);
+                document.getElementById('nextSalary').textContent = formatCurrency(nextTotal);
+                document.getElementById('fiveYearSalary').textContent = formatCurrency(fiveYearTotal);
+            }
+        }
+
+        function viewSalaryTable() {
+            if (!currentRoleKey) {
+                alert('Please select a role first');
+                return;
+            }
+
+            const modal = document.getElementById('tableModal');
+            const tbody = document.getElementById('tableBody');
+            const hourly = isHourly(currentRoleKey);
+            const longevityEligible = isLongevityEligible(currentRoleKey);
+
+            document.getElementById('tableTitle').textContent = currentRoleName + ' Salary Scale';
+            document.getElementById('bonusHeader').classList.toggle('hidden', !longevityEligible);
+            document.getElementById('totalHeader').classList.toggle('hidden', !longevityEligible);
+
+            tbody.innerHTML = '';
+
+            salaryData.salaryScales.forEach((scale, index) => {
+                const salary = scale[currentRoleKey];
+                const bonus = scale.bonus;
+                const isCurrentStep = index === currentStep;
+
+                const row = document.createElement('tr');
+                row.className = isCurrentStep ? 'current-step-row' : 'table-row-hover';
+
+                let rowHTML = `
+                    <td class="px-4 py-3 font-medium ${isCurrentStep ? 'text-fls-orange' : 'text-gray-900'}">${index}</td>
+                    <td class="px-4 py-3 text-gray-600">${index} year${index !== 1 ? 's' : ''}</td>
+                    <td class="px-4 py-3 text-right font-semibold ${isCurrentStep ? 'text-fls-orange' : 'text-gray-900'}">
+                        ${hourly ? formatHourly(salary) + '/hr' : formatCurrency(salary)}
+                    </td>
+                `;
+
+                if (longevityEligible) {
+                    rowHTML += `
+                        <td class="px-4 py-3 text-right text-gray-600">${bonus > 0 ? formatCurrency(bonus) : '—'}</td>
+                        <td class="px-4 py-3 text-right font-semibold ${isCurrentStep ? 'text-fls-orange' : 'text-gray-900'}">
+                            ${formatCurrency(salary + bonus)}
+                        </td>
+                    `;
+                }
+
+                row.innerHTML = rowHTML;
+                tbody.appendChild(row);
+            });
+
+            modal.classList.remove('hidden');
+        }
+
+        function closeTableModal() {
+            document.getElementById('tableModal').classList.add('hidden');
+        }
+
+        function openCompare() {
+            const modal = document.getElementById('compareModal');
+            const chipsContainer = document.getElementById('roleChips');
+
+            // Create role chips
+            chipsContainer.innerHTML = '';
+            const sortedRoles = Object.keys(salaryData.jobTitleMapping).sort();
+
+            sortedRoles.forEach(role => {
+                const chip = document.createElement('button');
+                chip.className = `role-chip px-3 py-1.5 rounded-full text-sm font-medium transition-all ${
+                    selectedRoles.includes(role)
+                        ? 'bg-fls-orange text-white'
+                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                }`;
+                chip.textContent = role;
+                chip.onclick = () => toggleRoleForCompare(role, chip);
+                chipsContainer.appendChild(chip);
+            });
+
+            updateCompareContent();
+            modal.classList.remove('hidden');
+        }
+
+        function toggleRoleForCompare(role, chip) {
+            const index = selectedRoles.indexOf(role);
+
+            if (index > -1) {
+                selectedRoles.splice(index, 1);
+                chip.className = 'role-chip px-3 py-1.5 rounded-full text-sm font-medium bg-gray-100 text-gray-700 hover:bg-gray-200 transition-all';
+            } else if (selectedRoles.length < 3) {
+                selectedRoles.push(role);
+                chip.className = 'role-chip px-3 py-1.5 rounded-full text-sm font-medium bg-fls-orange text-white transition-all';
+            } else {
+                alert('You can compare up to 3 roles. Please deselect one first.');
+                return;
+            }
+
+            updateCompareContent();
+        }
+
+        function updateCompareContent() {
+            const content = document.getElementById('compareContent');
+
+            if (selectedRoles.length === 0) {
+                content.innerHTML = `
+                    <div class="col-span-3 flex items-center justify-center h-64 bg-gray-50 rounded-xl border-2 border-dashed border-gray-200">
+                        <p class="text-gray-400 text-sm">Select roles above to compare</p>
+                    </div>
+                `;
+                return;
+            }
+
+            content.innerHTML = selectedRoles.map(role => {
+                const roleKey = salaryData.jobTitleMapping[role];
+                const salary = getSalary(roleKey, currentStep);
+                const bonus = getBonus(currentStep);
+                const hourly = isHourly(roleKey);
+                const longevityEligible = isLongevityEligible(roleKey);
+
+                const startSalary = getSalary(roleKey, 0);
+                const maxSalary = getSalary(roleKey, 30);
+                const maxBonus = getBonus(30);
+
+                return `
+                    <div class="compare-card rounded-xl p-5 text-white">
+                        <h4 class="font-bold text-lg mb-1">${role}</h4>
+                        <p class="text-gray-300 text-xs mb-4">Step ${currentStep}</p>
+
+                        <div class="bg-white/10 rounded-lg p-4 mb-4">
+                            <p class="text-gray-300 text-xs mb-1">${hourly ? 'Hourly Rate' : 'Base Salary'}</p>
+                            <p class="text-2xl font-bold">${hourly ? formatHourly(salary) + '/hr' : formatCurrency(salary)}</p>
+                            ${longevityEligible && bonus > 0 ? `
+                                <div class="mt-2 pt-2 border-t border-white/20">
+                                    <p class="text-xs text-gray-300">+ ${formatCurrency(bonus)} bonus</p>
+                                    <p class="text-lg font-bold text-fls-orange-light">${formatCurrency(salary + bonus)} total</p>
+                                </div>
+                            ` : ''}
+                        </div>
+
+                        <div class="space-y-2 text-sm">
+                            <div class="flex justify-between">
+                                <span class="text-gray-300">Starting (Step 0)</span>
+                                <span class="font-medium">${hourly ? formatHourly(startSalary) : formatCurrency(startSalary)}</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-gray-300">Maximum (Step 30)</span>
+                                <span class="font-medium">${hourly ? formatHourly(maxSalary) : formatCurrency(longevityEligible ? maxSalary + maxBonus : maxSalary)}</span>
+                            </div>
+                            ${longevityEligible ? `
+                                <div class="flex justify-between text-fls-orange-light">
+                                    <span>Longevity Bonus</span>
+                                    <span class="font-medium">Eligible</span>
+                                </div>
+                            ` : ''}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function closeCompareModal() {
+            document.getElementById('compareModal').classList.add('hidden');
+        }
+    </script>
+</body>
+</html>
